@@ -4,13 +4,14 @@ import {
 } from "@chorus-one/ethereum";
 
 export const validatorAddress =
-  CHORUS_ONE_ETHEREUM_VALIDATORS.hoodi.mevMaxVault;
+  CHORUS_ONE_ETHEREUM_VALIDATORS.ethereum.mevMaxVault;
 export const staker = new EthereumStaker({
-  network: "hoodi",
+  network: "ethereum",
   rpcUrl: process.env.BROADCASTING_NETWORK_RPC_NODE_URL,
 });
 
 export const ETH_HOODI = 560048;
+export const ETH_MAINNET = 1;
 
 export { unstakeAll } from "./lib/unstakeAll";
 export { stake } from "./lib/stake";

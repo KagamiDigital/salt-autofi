@@ -12,9 +12,11 @@ import { sendTransaction } from "../../../salt";
 export async function stake({
   accountAddress,
   amount,
+  accountId,
 }: {
   accountAddress: string;
   amount?: BigNumber;
+  accountId?: string;
 }) {
   const value =
     amount ?? parseEther(await askForInput("Deposit amount (ETH): "));
@@ -31,6 +33,7 @@ export async function stake({
     recipient: stakeTx.to,
     value,
     data: stakeTx.data,
+    _accountId: accountId,
   });
 
   console.log(
