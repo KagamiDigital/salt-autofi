@@ -5,7 +5,6 @@ import * as chorus_one from "./index";
 import { NudgeListener, SaltAccount } from "salt-sdk";
 
 let nudgeListener: NudgeListener | undefined = undefined;
-let isListenerEnabled = false;
 let managedAccounts: Record<string, SaltAccount> = {};
 
 const scanInvitationsAndAccept = async () => {
@@ -28,40 +27,52 @@ const scanNewManagedAccounts = async () => {
       .filter((acc) =>
         acc.signers.some((s) => s.toLowerCase() === signerAddress.toLowerCase())
       )
-      .forEach((acc) => accounts.push(acc));
+      .forEach(
+        (acc) =>
+          !managedAccounts[acc.publicKey] &&
+          (managedAccounts[acc.publicKey] = acc)
+      );
   }
 };
 
 const scanAccountsForSweeps = async () => {
-  for (let i = 0; i < accounts.length; i++) {
+  const accountAddresses = Object.keys(managedAccounts);
+  for (let i = 0; i < accountAddresses.length; i++) {
     const balance = await broadcasting_network_provider.getBalance(
-      accounts[i].publicKey
+      accountAddresses[i]
     );
-    if (formatEther(balance) > "0.001") {
+    if (formatEther(balance) > "25") {
       await chorus_one.stake({
-        accountAddress: accounts[i].publicKey,
+        accountAddress: accountAddresses[i],
+        amount: balance,
       });
+    } else {
+      console.log("Insuccient balance to sweep", balance);
     }
   }
 };
 
-const startNudgeListener = async () => {
-  if (!nudgeListener) {
-    isListenerEnabled = true;
-    nudgeListener = await salt.listenToAccountNudges(signer);
-  } else {
-    isListenerEnabled = true;
-    nudgeListener.enableNudgeListener();
-  }
+export const setup = async () => {
+  nudgeListener = await salt.listenToAccountNudges(signer);
 };
 
-const main = async () => {
-  await startNudgeListener();
-};
-
-const interval = async () => {
+export const intervalWork = async () => {
   // 1. check invitations
   await scanInvitationsAndAccept();
 
-  //2
+  // 2. scan accounts
+  await scanNewManagedAccounts();
+
+  if (!nudgeListener) {
+    await scanAccountsForSweeps();
+  } else {
+    if (!nudgeListener.getIsProcessingNudge()) {
+      // disable nudge responses
+      nudgeListener.disableNudgeListener();
+      // do sweep work
+      await scanAccountsForSweeps();
+      // enable nudgeListener again
+      nudgeListener.enableNudgeListener();
+    }
+  }
 };
