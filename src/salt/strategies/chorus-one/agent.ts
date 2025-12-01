@@ -1,10 +1,12 @@
+import { formatEther } from "ethers/lib/utils";
 import { salt } from "../../..";
 import { broadcasting_network_provider, signer } from "../../../config";
+import * as chorus_one from "./index";
 
 let nudgeListener = undefined;
 const accounts: Record<string, any> = {};
 
-const scanForNewInvitations = async () => {
+const scanInvitationsAndAccept = async () => {
   const response = await salt.getOrganisationsInvitations();
   const invitations = response.invitations;
 
@@ -14,16 +16,24 @@ const scanForNewInvitations = async () => {
   }
 };
 
+const scanAccountsForSweeps = async () => {
+  const accountAddresses = Object.keys(accounts);
+  for (let i = 0; i < accountAddresses.length; i++) {
+    const balance = await broadcasting_network_provider.getBalance(
+      accounts[i].publicKey
+    );
+    if (formatEther(balance) > "0.001") {
+      await chorus_one.stake({
+        accountAddress: accountAddresses[i],
+      });
+    }
+  }
+};
+
 const main = async () => {
   const signerAddress = await signer.getAddress();
-  // 1. scan new invitations
-  const response = await salt.getOrganisationsInvitations();
-  const invitations = response.invitations;
-
-  // accept new invitations
-  for (let i = 0; i < invitations.length; i++) {
-    await salt.acceptOrganisationInvitation(invitations[i]._id);
-  }
+  // 1. scan for invitations
+  await scanInvitationsAndAccept();
 
   // 2. setup the nudge listener if
   if (!nudgeListener) nudgeListener = await salt.listenToAccountNudges(signer);
@@ -36,12 +46,10 @@ const main = async () => {
       .filter((acc) =>
         acc.signers.some((s) => s.toLowerCase() === signerAddress)
       )
-      .forEach((acc) => (accounts[acc.id] = acc));
+      .forEach((acc) => (accounts[acc.publicKey] = acc));
   }
 
-  for (let i = 0; i < Object.keys(accounts).length; i++) {
-    const balance = await broadcasting_network_provider.getBalance(
-      accounts[i].publicKey
-    );
-  }
+  const setInterval(async () => {
+    await scanAccountsForSweeps();
+  }, 3 * 60000);
 };
