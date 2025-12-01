@@ -2,9 +2,11 @@ import { formatEther } from "ethers/lib/utils";
 import { salt } from "../../..";
 import { broadcasting_network_provider, signer } from "../../../config";
 import * as chorus_one from "./index";
+import { NudgeListener, SaltAccount } from "salt-sdk";
 
-let nudgeListener = undefined;
-const accounts: Record<string, any> = {};
+let nudgeListener: NudgeListener | undefined = undefined;
+let isListenerEnabled = false;
+let managedAccounts: Record<string, SaltAccount> = {};
 
 const scanInvitationsAndAccept = async () => {
   const response = await salt.getOrganisationsInvitations();
@@ -16,40 +18,50 @@ const scanInvitationsAndAccept = async () => {
   }
 };
 
-const scanAccountsForSweeps = async () => {
-  const accountAddresses = Object.keys(accounts);
-  for (let i = 0; i < accountAddresses.length; i++) {
-    const balance = await broadcasting_network_provider.getBalance(
-      accounts[i].publicKey
-    );
-    if (formatEther(balance) > "0.001") {
-      await chorus_one.stake({
-        accountAddress: accountAddresses[i],
-      });
-    }
-  }
-};
-
-const main = async () => {
+const scanNewManagedAccounts = async () => {
   const signerAddress = await signer.getAddress();
-  // 1. scan for invitations
-  await scanInvitationsAndAccept();
-
-  // 2. setup the nudge listener if
-  if (!nudgeListener) nudgeListener = await salt.listenToAccountNudges(signer);
-
   const organisations = await salt.getOrganisations();
 
   for (let i = 0; i < organisations.length; i++) {
     const orgAccounts = await salt.getAccounts(organisations[i]._id);
     orgAccounts
       .filter((acc) =>
-        acc.signers.some((s) => s.toLowerCase() === signerAddress)
+        acc.signers.some((s) => s.toLowerCase() === signerAddress.toLowerCase())
       )
-      .forEach((acc) => (accounts[acc.publicKey] = acc));
+      .forEach((acc) => accounts.push(acc));
   }
+};
 
-  const setInterval(async () => {
-    await scanAccountsForSweeps();
-  }, 3 * 60000);
+const scanAccountsForSweeps = async () => {
+  for (let i = 0; i < accounts.length; i++) {
+    const balance = await broadcasting_network_provider.getBalance(
+      accounts[i].publicKey
+    );
+    if (formatEther(balance) > "0.001") {
+      await chorus_one.stake({
+        accountAddress: accounts[i].publicKey,
+      });
+    }
+  }
+};
+
+const startNudgeListener = async () => {
+  if (!nudgeListener) {
+    isListenerEnabled = true;
+    nudgeListener = await salt.listenToAccountNudges(signer);
+  } else {
+    isListenerEnabled = true;
+    nudgeListener.enableNudgeListener();
+  }
+};
+
+const main = async () => {
+  await startNudgeListener();
+};
+
+const interval = async () => {
+  // 1. check invitations
+  await scanInvitationsAndAccept();
+
+  //2
 };
