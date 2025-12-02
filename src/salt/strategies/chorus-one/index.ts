@@ -18,3 +18,5 @@ export { initStaker } from "./lib/initStaker";
 export { getStakeInfo } from "./lib/getStakeInfo";
 export { requestStatus } from "./lib/requestStatus";
 export { withdraw } from "./lib/withdraw";
+export { stakeDirect } from "./lib/stakeDirect";
+export { chorusOneAgent } from "./agent";

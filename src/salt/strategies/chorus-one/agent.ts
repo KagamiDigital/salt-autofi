@@ -1,15 +1,27 @@
-import { formatEther } from "ethers/lib/utils";
-import { salt } from "../../..";
+import { salt } from "../../../interactive";
 import { broadcasting_network_provider, signer } from "../../../config";
 import * as chorus_one from "./index";
 import { NudgeListener, SaltAccount } from "salt-sdk";
+import { printRectangle } from "../../../helpers";
+import { BigNumber } from "ethers";
 
 let nudgeListener: NudgeListener | undefined = undefined;
 let managedAccounts: Record<string, SaltAccount> = {};
 
-const scanInvitationsAndAccept = async () => {
+interface Deposit {
+  accountAddress: string;
+  accountId: string;
+  depositAmount: BigNumber;
+}
+
+/**
+ * Accept any pending invitation(s) to new Organisations
+ */
+const acceptPendingInvitations = async () => {
   const response = await salt.getOrganisationsInvitations();
   const invitations = response.invitations;
+
+  console.log("invitations received", invitations);
 
   // accept new invitations
   for (let i = 0; i < invitations.length; i++) {
@@ -17,62 +29,123 @@ const scanInvitationsAndAccept = async () => {
   }
 };
 
-const scanNewManagedAccounts = async () => {
+/**
+ * find accounts with the agent as one of the signers
+ */
+const findManagedAccounts = async () => {
   const signerAddress = await signer.getAddress();
   const organisations = await salt.getOrganisations();
 
   for (let i = 0; i < organisations.length; i++) {
     const orgAccounts = await salt.getAccounts(organisations[i]._id);
-    orgAccounts
-      .filter((acc) =>
-        acc.signers.some((s) => s.toLowerCase() === signerAddress.toLowerCase())
-      )
-      .forEach(
-        (acc) =>
-          !managedAccounts[acc.publicKey] &&
-          (managedAccounts[acc.publicKey] = acc)
-      );
+
+    orgAccounts.forEach(
+      (acc) =>
+        acc.publicKey !== null &&
+        acc.signers.some(
+          (s) => s.toLowerCase() === signerAddress.toLowerCase()
+        ) &&
+        (managedAccounts[acc.publicKey] = acc)
+    );
   }
 };
 
-const scanAccountsForSweeps = async () => {
+/**
+ * Finds new deposits made to accounts managed by the agent
+ * @returns an array of accounts for which deposits were made
+ */
+const findNewDeposits = async (): Promise<Deposit[]> => {
   const accountAddresses = Object.keys(managedAccounts);
+  const deposits: Deposit[] = [];
+
   for (let i = 0; i < accountAddresses.length; i++) {
-    const balance = await broadcasting_network_provider.getBalance(
-      accountAddresses[i]
-    );
-    if (formatEther(balance) > "25") {
-      await chorus_one.stake({
-        accountAddress: accountAddresses[i],
-        amount: balance,
-      });
-    } else {
-      console.log("Insuccient balance to sweep", balance);
+    try {
+      const balance = await broadcasting_network_provider.getBalance(
+        accountAddresses[i]
+      );
+      if (balance.gt(0)) {
+        deposits.push({
+          accountAddress: accountAddresses[i],
+          accountId: managedAccounts[accountAddresses[i]].id,
+          depositAmount: balance,
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Failed to get balance for account ${accountAddresses[i]}:`,
+        error
+      );
     }
   }
+
+  return deposits;
 };
 
-export const setup = async () => {
-  nudgeListener = await salt.listenToAccountNudges(signer);
-};
+/**
+ * The strategy to be implemented by the chorus one agent
+ */
+const sweepNewDeposits = async () => {
+  const deposits = await findNewDeposits();
+  for (let i = 0; i < deposits.length; i++) {
+    const isProcessingNudge = nudgeListener.getIsProcessingNudge();
+    if (nudgeListener && isProcessingNudge) continue;
 
-export const intervalWork = async () => {
-  // 1. check invitations
-  await scanInvitationsAndAccept();
-
-  // 2. scan accounts
-  await scanNewManagedAccounts();
-
-  if (!nudgeListener) {
-    await scanAccountsForSweeps();
-  } else {
-    if (!nudgeListener.getIsProcessingNudge()) {
-      // disable nudge responses
-      nudgeListener.disableNudgeListener();
-      // do sweep work
-      await scanAccountsForSweeps();
-      // enable nudgeListener again
+    nudgeListener.disableNudgeListener();
+    try {
+      await chorus_one.stakeDirect({
+        accountAddress: deposits[i].accountAddress,
+        accountId: deposits[i].accountId,
+        amount: deposits[i].depositAmount,
+      });
+    } catch (err) {
+      console.error("Funds could not be staked", err);
+    } finally {
       nudgeListener.enableNudgeListener();
     }
   }
+};
+
+/**
+ * Initializes the chorus-one agent.
+ */
+const initializeAgent = async () => {
+  const publicAddress = await signer.getAddress();
+
+  try {
+    await salt.authenticate(signer);
+  } catch (authError) {
+    console.warn("Could not authenticate to Salt", authError);
+  }
+
+  printRectangle(
+    `ASSET MANAGER ${publicAddress.toUpperCase()} CONNECTED to Salt`
+  );
+
+  await chorus_one.initStaker();
+  nudgeListener = await salt.listenToAccountNudges(signer);
+};
+
+/**
+ * run the chorus one staking agent's logic.
+ */
+const run = async () => {
+  // 1. check invitations
+  await acceptPendingInvitations();
+
+  // 2. scan accounts
+  await findManagedAccounts();
+
+  //3. scanning for sweeps
+  await sweepNewDeposits();
+};
+
+/**
+ * runs the chorus-one agent staking logic once every 5 minutes
+ */
+export const chorusOneAgent = async () => {
+  await initializeAgent();
+
+  setInterval(async () => {
+    await run();
+  }, 5 * 60 * 1000);
 };
