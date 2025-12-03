@@ -10,9 +10,11 @@ import validators from "../../../../../contracts/somnia/validators.json";
 export async function delegateStakeToFirst({
   accountAddress,
   amount,
+  accountId,
 }: {
   accountAddress: string;
   amount: BigNumber;
+  accountId?: string;
 }) {
   let emptyValidator = undefined;
   for (const validatorAddress of Object.keys(validators)) {
@@ -29,5 +31,9 @@ export async function delegateStakeToFirst({
     throw new Error(`All the validators are already delegated too!`);
   }
 
-  await somnia.delegateStake({ amount, validatorAddress: emptyValidator });
+  await somnia.delegateStake({
+    amount,
+    validatorAddress: emptyValidator,
+    accountId: accountId,
+  });
 }

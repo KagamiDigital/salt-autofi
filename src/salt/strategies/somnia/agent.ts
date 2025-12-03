@@ -1,4 +1,4 @@
-import * as chorus_one from "./index";
+import { parseEther } from "ethers/lib/utils";
 import {
   acceptPendingInvitations,
   findManagedAccounts,
@@ -6,14 +6,14 @@ import {
   initializeAgent,
   nudgeListener,
 } from "../../salt";
-import { parseEther } from "ethers/lib/utils";
+import * as somnia from "../somnia/index";
 
 /**
  * The strategy to be implemented by the chorus one agent
  */
 const sweepNewDeposits = async () => {
   const deposits = await findNewDeposits();
-  for (let i = 0; i < deposits.length; i++) {
+  for (let i = 0; i < Math.min(5, deposits.length); i++) {
     const isProcessingNudge = nudgeListener.getIsProcessingNudge();
     if (nudgeListener && isProcessingNudge) {
       console.log("signer is currently busy");
@@ -22,11 +22,12 @@ const sweepNewDeposits = async () => {
 
     nudgeListener.disableNudgeListener();
     try {
-      await chorus_one.stakeDirect({
+      await somnia.delegateStakeToFirst({
         accountAddress: deposits[i].accountAddress,
         accountId: deposits[i].accountId,
-        amount: parseEther("0.00001"), // deposits[i].depositAmount,
+        amount: parseEther("0.0001"), // deposits[i].depositAmount,
       });
+      deposits[i].processed = true;
     } catch (err) {
       console.error("Funds could not be staked", err);
     } finally {
@@ -53,12 +54,11 @@ const run = async () => {
  * Initializes the chorus-one agent and its strategy to run periodically.
  * @param the period at which the strategy should be run at.
  */
-export const chorusOneAgent = async (period: number) => {
+export const somniaAgent = async (period: number) => {
   // 1. initialize the agent
   await initializeAgent();
-  // 2. initialize the staker
-  await chorus_one.initStaker();
-  // 3. run the strategy in an interval
+
+  // 2. run the strategy in an interval
   setInterval(async () => {
     await run();
   }, period);

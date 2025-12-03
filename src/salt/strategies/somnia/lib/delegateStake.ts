@@ -1,6 +1,6 @@
 import { BigNumber, ethers } from "ethers";
 import { stakingContract, stakingContractAddress } from "..";
-import { sendTransaction } from "../../../salt";
+import { sendTransaction, sendTransactionDirect } from "../../../salt";
 
 /**
  *
@@ -13,9 +13,11 @@ import { sendTransaction } from "../../../salt";
 export async function delegateStake({
   amount,
   validatorAddress,
+  accountId,
 }: {
   amount: BigNumber;
   validatorAddress: string;
+  accountId?: string;
 }) {
   const txData = stakingContract.interface.encodeFunctionData(
     "delegateStake(address, uint256)",
@@ -29,9 +31,16 @@ export async function delegateStake({
     txData
   );
 
-  await sendTransaction({
-    value: amount,
-    recipient: stakingContractAddress,
-    data: txData,
-  });
+  accountId === undefined
+    ? await sendTransaction({
+        value: amount,
+        recipient: stakingContractAddress,
+        data: txData,
+      })
+    : await sendTransactionDirect({
+        value: amount,
+        recipient: stakingContractAddress,
+        data: txData,
+        accountId: accountId,
+      });
 }
