@@ -1,56 +1,11 @@
+import { salt } from "..";
 import { broadcasting_network_provider, signer } from "../config";
 import { askForInput, printRectangle } from "../helpers";
 import { ethers, BigNumber } from "ethers";
-import { salt } from "../interactive";
-import { NudgeListener, SaltAccount } from "salt-sdk";
-import { parseEther } from "ethers/lib/utils";
 
 export let orgIndex = undefined;
 export let accIndex = undefined;
 export let accountAddress = undefined;
-
-export let nudgeListener: NudgeListener | undefined = undefined;
-export let managedAccounts: Record<string, SaltAccount> = {};
-export let deposits: Deposit[] = [];
-
-export interface Deposit {
-  accountAddress: string;
-  accountId: string;
-  balance: BigNumber;
-  depositAmount: BigNumber;
-  processed: boolean;
-  timestamp: number;
-}
-
-function handleNewDeposit({
-  accountAddress,
-  accountId,
-  balance,
-}: {
-  accountAddress: string;
-  accountId: string;
-  balance: BigNumber;
-}) {
-  const idx = deposits.findIndex((d) => d.accountId === accountId);
-  if (idx !== -1) {
-    if (balance.gt(deposits[idx].balance)) {
-      deposits[idx].depositAmount = balance.sub(deposits[idx].balance);
-      deposits[idx].processed = false;
-      deposits[idx].timestamp = new Date().getTime();
-    }
-    deposits[idx].balance = balance;
-  } else {
-    const deposit: Deposit = {
-      accountAddress: accountAddress,
-      accountId: accountId,
-      balance: balance,
-      depositAmount: balance,
-      processed: false,
-      timestamp: new Date().getTime(),
-    };
-    deposits.push(deposit);
-  }
-}
 
 /**
  * Interactively asks user for orgIndex and accIndex.
@@ -215,12 +170,14 @@ export async function sendTransactionDirect({
   data,
   gas,
   accountId,
+  timeoutSeconds = 59,
 }: {
   value?: BigNumber;
   recipient?: string;
   data?: string;
   gas?: string;
   accountId?: string;
+  timeoutSeconds?: number;
 }) {
   value =
     value && value.gte(0)
@@ -256,6 +213,11 @@ export async function sendTransactionDirect({
 
   // A Promise wrapper around the salt-sdk internal state machine
   await new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(
+        `The transaction is taking more than ${timeoutSeconds} seconds to complete, resolving the promise`
+      );
+    }, timeoutSeconds * 1000);
     //propose
     transfer.onPropose((data) => console.log("PROPOSE :", data));
     // sign
@@ -303,90 +265,3 @@ export async function sendTransactionDirect({
     });
   });
 }
-
-/**
- * Accept any pending invitation(s) to new Organisations
- */
-export const acceptPendingInvitations = async () => {
-  const response = await salt.getOrganisationsInvitations();
-  const invitations = response.invitations;
-
-  console.log("invitations received", invitations);
-
-  //await salt.acceptOrganisationInvitation("692f0dca7e045e9fd6d30fb0");
-
-  // accept new invitations
-  for (let i = 0; i < invitations.length; i++) {
-    await salt.acceptOrganisationInvitation(invitations[i]._id);
-  }
-};
-
-/**
- * find accounts with the agent as one of the signers
- */
-export const findManagedAccounts = async () => {
-  const signerAddress = await signer.getAddress();
-  const organisations = await salt.getOrganisations();
-
-  for (let i = 0; i < organisations.length; i++) {
-    const orgAccounts = await salt.getAccounts(organisations[i]._id);
-
-    orgAccounts.forEach(
-      (acc) =>
-        acc.publicKey !== null &&
-        acc.signers.some(
-          (s) => s.toLowerCase() === signerAddress.toLowerCase()
-        ) &&
-        (managedAccounts[acc.publicKey] = acc)
-    );
-  }
-};
-
-/**
- * Finds new deposits made to accounts managed by the agent
- * @returns an array of accounts for which deposits were made
- */
-export const findNewDeposits = async (): Promise<Deposit[]> => {
-  const accountAddresses = Object.keys(managedAccounts);
-
-  for (let i = 0; i < accountAddresses.length; i++) {
-    try {
-      const balance = await broadcasting_network_provider.getBalance(
-        accountAddresses[i]
-      );
-      if (balance.gt(parseEther("1.8"))) {
-        handleNewDeposit({
-          accountAddress: accountAddresses[i],
-          accountId: managedAccounts[accountAddresses[i]].id,
-          balance: balance,
-        });
-      }
-    } catch (error) {
-      console.error(
-        `Failed to get balance for account ${accountAddresses[i]}:`,
-        error
-      );
-    }
-  }
-
-  return deposits.filter((d) => d.processed === false);
-};
-
-/**
- * Initializes the chorus-one agent.
- */
-export const initializeAgent = async () => {
-  const publicAddress = await signer.getAddress();
-
-  try {
-    await salt.authenticate(signer);
-  } catch (authError) {
-    console.warn("Could not authenticate to Salt", authError);
-  }
-
-  printRectangle(
-    `ASSET MANAGER ${publicAddress.toUpperCase()} CONNECTED to Salt`
-  );
-
-  nudgeListener = await salt.listenToAccountNudges(signer);
-};

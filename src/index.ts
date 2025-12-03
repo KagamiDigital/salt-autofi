@@ -1,15 +1,21 @@
+import { Salt } from "salt-sdk";
 import { AGENT } from "./config";
 import { interactiveMode } from "./interactive";
-import { chorusOneAgent } from "./salt/strategies/chorus-one";
-import { somniaAgent } from "./salt/strategies/somnia/agent";
+import { startChorusOneAgent } from "./salt/strategies/chorus-one";
+import { startSomniaAgent } from "./salt/strategies/somnia/agent";
+import { initializeAgent } from "./salt/agent";
 
-let period = 5 * 60 * 1000;
+export const salt = new Salt({ environment: "TESTNET" });
+
+let period = 3 * 60 * 1000;
 
 (async () => {
   if (AGENT === "CHORUS-ONE") {
-    chorusOneAgent(period);
+    await initializeAgent();
+    startChorusOneAgent(period);
   } else if (AGENT === "SOMNIA") {
-    somniaAgent(period);
+    await initializeAgent();
+    startSomniaAgent(period);
   } else {
     console.info(
       `unrecognized value for AGENT: ${AGENT}, running interactive mode`

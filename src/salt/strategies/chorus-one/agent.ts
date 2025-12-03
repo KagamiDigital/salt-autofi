@@ -1,64 +1,25 @@
+import { syncNewDeposits } from "../../agent";
+import { syncSweeps } from "../../agent/lib/syncSweeps";
 import * as chorus_one from "./index";
-import {
-  acceptPendingInvitations,
-  findManagedAccounts,
-  findNewDeposits,
-  initializeAgent,
-  nudgeListener,
-} from "../../salt";
-import { parseEther } from "ethers/lib/utils";
-
-/**
- * The strategy to be implemented by the chorus one agent
- */
-const sweepNewDeposits = async () => {
-  const deposits = await findNewDeposits();
-  for (let i = 0; i < deposits.length; i++) {
-    const isProcessingNudge = nudgeListener.getIsProcessingNudge();
-    if (nudgeListener && isProcessingNudge) {
-      console.log("signer is currently busy");
-      continue;
-    }
-
-    nudgeListener.disableNudgeListener();
-    try {
-      await chorus_one.stakeDirect({
-        accountAddress: deposits[i].accountAddress,
-        accountId: deposits[i].accountId,
-        amount: parseEther("0.00001"), // deposits[i].depositAmount,
-      });
-    } catch (err) {
-      console.error("Funds could not be staked", err);
-    } finally {
-      nudgeListener.enableNudgeListener();
-    }
-  }
-};
 
 /**
  * run the chorus one staking agent's logic.
  */
 const run = async () => {
-  // 1. check invitations
-  await acceptPendingInvitations();
-
-  // 2. scan accounts
-  await findManagedAccounts();
-
-  //3. scanning for sweeps
-  await sweepNewDeposits();
+  //1. sync for new deposits
+  await syncNewDeposits();
+  // sync sweeps
+  await syncSweeps({ sweepFunction: chorus_one.stakeDirect });
 };
 
 /**
  * Initializes the chorus-one agent and its strategy to run periodically.
  * @param the period at which the strategy should be run at.
  */
-export const chorusOneAgent = async (period: number) => {
-  // 1. initialize the agent
-  await initializeAgent();
-  // 2. initialize the staker
+export const startChorusOneAgent = async (period: number) => {
+  // 1. initialize the staker
   await chorus_one.initStaker();
-  // 3. run the strategy in an interval
+  // 2. run the strategy in an interval
   setInterval(async () => {
     await run();
   }, period);

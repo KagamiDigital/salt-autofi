@@ -10,8 +10,7 @@ import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
 import { Salt } from "salt-sdk";
 import { SOMNIA_SHANON } from "./salt/strategies/somnia";
 import { transfer } from "./salt/strategies/erc20";
-
-export const salt = new Salt({ environment: "TESTNET" });
+import { salt } from ".";
 
 // A basic TUI to demonstrate usage
 export async function interactiveMode() {
