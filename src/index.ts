@@ -4,4 +4,4 @@ import { interactiveMode } from "./interactive";
 
 export const salt = new Salt({ environment: "MAINNET" });
 
-(() => interactiveMode())();
+(() => agentMode())();
