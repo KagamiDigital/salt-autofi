@@ -1,15 +1,14 @@
 import { broadcasting_network_provider, signer } from "./config";
 import { askForInput, networkSanityCheck, printRectangle, rl } from "./helpers";
-import * as chorus_one from "./salt/strategies/chorus-one";
-import * as aave from "./salt/strategies/aave";
-import * as somnia from "./salt/strategies/somnia";
-import * as tokosfi from "./salt/strategies/tokos.fi";
-import { chooseAccount, sendTransaction } from "./salt/salt";
+import * as chorus_one from "./strategies/chorus-one";
+import * as aave from "./strategies/aave";
+import * as somnia from "./strategies/somnia";
+import { chooseAccount, sendTransaction } from "./salt";
 import { ethers } from "ethers";
-import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
+import { formatEther, formatUnits } from "ethers/lib/utils";
 import { Salt } from "salt-sdk";
-import { SOMNIA_SHANON } from "./salt/strategies/somnia";
-import { transfer } from "./salt/strategies/erc20";
+import { SOMNIA_SHANON } from "./strategies/somnia";
+import { transfer } from "./strategies/erc20";
 
 const salt = new Salt({ environment: "TESTNET" });
 
@@ -43,7 +42,7 @@ export async function interactiveMode() {
       });
     } else if (input === "3") {
       const input = await askForInput(
-        "Which strategy: \n [1] Chorus One Staking \n [2] Somnia Staking \n [3] Aave \n [4] Tokos.fi \n [5] Exit \n Please choose one of the options listed above: "
+        "Which strategy: \n [1] Chorus One Staking \n [2] Somnia Staking \n [3] Aave \n [4] Exit \n Please choose one of the options listed above: "
       );
 
       if (input === "1") {
@@ -193,52 +192,6 @@ SST already with ${info.totalPendingRewards} pending rewards across ${
           console.log(`Please enter a valid choice`);
         }
       } else if (input === "4") {
-        // tokos.fi
-        // checks using somnia testnet
-        const networkMatch = await networkSanityCheck(SOMNIA_SHANON);
-        if (!networkMatch) {
-          console.error(
-            `\n(Warning: Switch your orchestration network to Somnia Shannon (${SOMNIA_SHANON}) (.env) and reload the project to use tokos.fi)\n`
-          );
-          return;
-        }
-        const msg = `In tokos.fi re-staking, do you wish to: \n [1] depositETH \n [2] TODO \n [3] Exit \n Please choose one of the options above: `;
-        const { accountAddress } = await chooseAccount();
-
-        // Print useful information
-        const nativeBalance = formatEther(
-          await broadcasting_network_provider.getBalance(accountAddress)
-        );
-        const restakedBalance = formatEther(
-          await tokosfi.aSOMIWSSTContract.balanceOf(accountAddress)
-        );
-        console.log(`Your Salt account tokos.fi information:`);
-        console.log(`- Native balance (SST): ${nativeBalance}`);
-        console.log(`- aSOMWSST balance: ${restakedBalance}`);
-
-        const input = await askForInput(msg);
-
-        if (input === "1") {
-          // depositETH
-          const amount = await askForInput(
-            "Enter the amount to deposit (in ETH): "
-          );
-          await tokosfi
-            .depositETH({
-              me: accountAddress,
-              amount: parseEther(amount),
-            })
-            .catch((error) => {
-              console.log(`Error:`, error);
-            });
-        } else if (input === "2") {
-          // TODO
-        } else if (input === "3") {
-          done = true;
-        } else {
-          console.log(`Please enter a valid choice`);
-        }
-      } else if (input === "5") {
         done = true;
       } else {
         console.log("Please enter a valid choice");

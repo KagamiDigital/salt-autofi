@@ -1,9 +1,12 @@
 import { AGENT, signer } from "./config";
 import { interactiveMode } from "./interactive";
-import * as chorus_one from "./salt/strategies/chorus-one/index";
-import * as somnia from "./salt/strategies/somnia/index";
+import * as chorus_one from "./strategies/chorus-one/index";
+import * as somnia from "./strategies/somnia/index";
 import { parseEther } from "ethers/lib/utils";
-import { SaltAgent, Strategy } from "./salt/agent/index";
+import { SaltAgent, Strategy } from "./agent/index";
+import { Salt } from "salt-sdk";
+
+export const salt = new Salt({ environment: "TESTNET" });
 
 (async () => {
   if (AGENT === "CHORUS-ONE") {
