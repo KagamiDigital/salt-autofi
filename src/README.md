@@ -36,11 +36,11 @@ When run, starts a TUI.
 
 ## How to run this project
 
-1. populate the .env file appropriately by referring to .env.sample
+1. Populate the .env file appropriately by referring to .env.sample
 2. npm ci
 3. npm start
 
-NB: this repository can be ran in either agent or interactive mode. To run it in agent mode just set the AGENT environment variable to one of the valid values in .env.sample, otherwise just leave this variable empty for interactive mode.
+NB: This repository can be ran in either agent or interactive mode. To run it in agent mode just set the AGENT environment variable to one of the valid values in .env.sample, otherwise just leave this variable empty for interactive mode.
 
 ## How to use the agent mode
 
@@ -54,4 +54,4 @@ Then,
 4. Your agent will join the organisation in the next 60 seconds (refresh the page to see the change).
 5. Start and complete a new account and invite your agent to it (your agent will join the huddle automatically).
 6. Based on the strategy you are running, send at least 0.01 of the currency native to the strategy to that account
-7. wait for your funds to be swept (~ 3/5 minutes)
+7. Wait for your funds to be swept (~ 3/5 minutes)
