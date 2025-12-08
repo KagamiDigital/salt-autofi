@@ -119,16 +119,16 @@ export class SaltAgent {
    * ```
    */
   async init() {
+    this.on();
     await this.salt.authenticate(this.signer);
     this.nudgeListener = await this.salt.listenToAccountNudges(this.signer);
 
     setInterval(async () => {
       try {
-        if (this.state === "sleeping") {
-          this.state = "watching";
-          await this.syncInvitations();
-          await this.syncManagedAccounts();
-          await this.syncNewDeposits();
+        if (this.state !== "sleeping") {
+          this.syncInvitations();
+          this.syncManagedAccounts();
+          this.state !== "sweeping" && this.syncNewDeposits();
         }
       } catch (error) {
         console.error("error fetching API information", error);
@@ -140,11 +140,11 @@ export class SaltAgent {
    * Sweeps the next deposit in the queue. It is called automatically when one or more new deposits are found.
    * @internal
    */
-  private async sweepDeposit() {
+  private async sweepDeposits() {
     this.state = "sweeping";
 
     while (this.depositsQueue.length > 0) {
-      await this._sweepDeposit();
+      await this._sweepDeposits();
     }
 
     this.state = "watching";
@@ -180,7 +180,7 @@ export class SaltAgent {
           acc.signers.some(
             (s) => s.toLowerCase() === signerAddress.toLowerCase()
           ) &&
-          (this.managedAccounts[acc.publicKey] = acc)
+          this.managedAccounts.push(acc)
       );
     }
   }
@@ -190,7 +190,7 @@ export class SaltAgent {
    * @internal
    */
   private async syncNewDeposits() {
-    const accountAddresses = Object.keys(this.managedAccounts);
+    const accountAddresses = this.managedAccounts.map((acc) => acc.publicKey);
 
     for (let i = 0; i < accountAddresses.length; i++) {
       try {
@@ -200,11 +200,10 @@ export class SaltAgent {
         if (balance.gt(this.minBalance)) {
           this.handleNewDeposit({
             accountAddress: accountAddresses[i],
-            accountId: this.managedAccounts[accountAddresses[i]].id,
+            accountId: this.managedAccounts[i].id,
             balance: balance,
           });
         }
-        if (this.state === "watching") this.sweepDeposit();
       } catch (error) {
         console.error(
           `Failed to get balance for account ${accountAddresses[i]}:`,
@@ -212,6 +211,7 @@ export class SaltAgent {
         );
       }
     }
+    this.sweepDeposits();
   }
 
   /**
@@ -246,7 +246,7 @@ export class SaltAgent {
    * Pops the first deposit in the queue and sweeps it.
    * @internal
    */
-  private async _sweepDeposit() {
+  private async _sweepDeposits() {
     if (this.depositsQueue.length === 0) return;
 
     if (this.nudgeListener.getIsProcessingNudge()) return;
