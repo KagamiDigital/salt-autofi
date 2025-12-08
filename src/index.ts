@@ -13,13 +13,13 @@ export const salt = new Salt({ environment: "TESTNET" });
     const strategy: Strategy = {
       sweepFunction: chorus_one.stakeDirect,
     };
-    const agent = new SaltAgent(signer, strategy, parseEther("0.01"));
+    const agent = new SaltAgent(signer, strategy, parseEther("0.1"));
     agent.init();
   } else if (AGENT === "SOMNIA") {
     const strategy: Strategy = {
       sweepFunction: somnia.delegateStakeToFirst,
     };
-    const agent = new SaltAgent(signer, strategy, parseEther("0.01"));
+    const agent = new SaltAgent(signer, strategy, parseEther("0.1"));
     agent.init();
   } else {
     console.info(
