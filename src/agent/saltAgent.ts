@@ -122,7 +122,6 @@ export class SaltAgent {
     await this.salt.authenticate(this.signer);
     this.nudgeListener = await this.salt.listenToAccountNudges(this.signer);
 
-    /*
     setInterval(async () => {
       try {
         if (this.state === "sleeping") {
@@ -135,7 +134,6 @@ export class SaltAgent {
         console.error("error fetching API information", error);
       }
     }, 60 * 1000);
-    */
   }
 
   /**
