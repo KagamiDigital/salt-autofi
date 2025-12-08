@@ -122,6 +122,7 @@ export class SaltAgent {
     await this.salt.authenticate(this.signer);
     this.nudgeListener = await this.salt.listenToAccountNudges(this.signer);
 
+    /*
     setInterval(async () => {
       try {
         if (this.state === "sleeping") {
@@ -134,6 +135,7 @@ export class SaltAgent {
         console.error("error fetching API information", error);
       }
     }, 60 * 1000);
+    */
   }
 
   /**
@@ -253,6 +255,7 @@ export class SaltAgent {
 
     const deposit = this.depositsQueue.shift();
 
+    this.nudgeListener.disableNudgeListener();
     try {
       await this.strategy.sweepFunction({
         accountAddress: deposit.accountAddress,
@@ -261,6 +264,8 @@ export class SaltAgent {
       });
     } catch (err) {
       console.error("Funds could not be staked", err);
+    } finally {
+      this.nudgeListener.enableNudgeListener();
     }
   }
 }
