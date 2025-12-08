@@ -3,14 +3,14 @@
 [`salt-sdk`](https://npmjs.com/package/salt-sdk) is a publically available `npm`
 package that you can use today!
 
-### src/salt
+### salt/
 
 [`index.ts`](./salt/index.ts) provides
 a higher-level API for using Salt's software interactively.
 
 This folder should be really helpful for readers wondering how to perform basic actions like sending a transaction with the salt sdk.
 
-### src/agent
+### agent/
 
 [`saltAgent.ts`](./agent/saltAgent.ts) is a class based implementation of an agent built using the salt sdk.
 
@@ -20,7 +20,7 @@ An Agent is a signer on salt account, it has just enough permissions to be able 
 
 This folder should be really helpful for readers wondering how to build a agent on Salt, as well as the extent to which actions can be automated using the salt-sdk.
 
-### src/strategies
+### strategies/
 
 Every subfolder in the `/strategies` folder contains examples of how to use Salt with other protocols.
 

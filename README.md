@@ -2,15 +2,15 @@
 
 ## Introduction
 
-The asset manager repository is a starter pack for Salt asset managers.
+salt-autofi is a starter pack for asset managers and enthusiasts.
 By using our software, you can propose transactions to Salt accounts where you are an authorized signer.
-Instructions are for testnet access. Production access is available on request.
+Instructions are for testnet access (testnet.salt.space). Production (app.salt.space) access is available on request.
 
 ## Pre-requisites
 
 ### Technical pre-requisites
 
-Node.js is a required dependency to be able to install and run the asset manager repository. [Install Node.js](https://nodejs.org/en/download/package-manager).
+Node.js is a required dependency to be able to install and run salt-autofi. [Install Node.js](https://nodejs.org/en/download/package-manager).
 
 ### Other pre-requisites
 
