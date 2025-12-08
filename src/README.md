@@ -53,5 +53,5 @@ Then,
 3. Navigate to the collaborators tab and invite your agent (just enter its address in the form and submit).
 4. Your agent will join the organisation in the next 60 seconds (refresh the page to see the change).
 5. Start and complete a new account and invite your agent to it (your agent will join the huddle automatically).
-6. Based on the strategy you are running, send at least 0.1 of the currency native to the strategy to that account
+6. Based on the strategy you are running, send at least 0.01 of the currency native to the strategy to that account
 7. wait for your funds to be swept (~ 3/5 minutes)
