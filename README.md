@@ -2,9 +2,10 @@
 
 ## Introduction
 
-salt-autofi is a starter pack for asset managers and enthusiasts.
-By using our software, you can propose transactions to Salt accounts where you are an authorized signer.
-Instructions are for testnet access (testnet.salt.space). Production (app.salt.space) access is available on request.
+This repository is a starter pack for non-custodial service providers on Salt accounts. For example you could run a "wallet butler" which responds to messages from your customer on Salt and deploys funds on their behalf into yield opportunities.
+
+To achieve this, you will propose transactions to Salt accounts where you are an authorized signer.
+Instructions are for testnet access. Production access is available on request.
 
 ## Pre-requisites
 
@@ -24,13 +25,9 @@ Node.js is a required dependency to be able to install and run salt-autofi. [Ins
 3. rename .env.sample to .env and set the private key variable to the private key of the account you want to manage assets from. You must be a signer on this account.
 4. set BROADCASTING_NETWORK_RPC_NODE_URL, and BROADCASTING_NETWORK_ID to the broadcasting network of your choice from the [supported networks list](#supported-broadcasting-networks) below.
 
-## Run the project
-
-1. Populate the .env file appropriately by referring to .env.sample
-2. npm ci
-3. npm start
-
 NB: This repository can be ran in either agent or interactive mode. To run it in agent mode just set the AGENT environment variable to one of the valid values in .env.sample, otherwise just leave this variable empty for interactive mode.
+
+5. npm start
 
 ## Use an Agent
 
@@ -66,6 +63,7 @@ The broadcasting network simply refers to the network on which you wish to execu
 As of now Salt supports the following networks to broadcast transactions:
 
 - Ethereum Sepolia
+- Arbitrum Sepolia
 - Base Sepolia
 - Moonbase Alpha
 - Polygon Amoy
@@ -79,6 +77,11 @@ The orchestration network cannot be changed. Salt uses Arbitrum Sepolia for test
 The RPC nodes supplied by default in the .env.sample file are free nodes. The repository has been tested using these nodes. You may want to switch to paid nodes to improve your experience.
 
 If you wish to broadcast on a test EVM network that is not supported in the list, please contact the Salt team on [Discord](https://discord.gg/UhDUBW9ymM).
+
+## Useful Links
+
+SDK: https://www.npmjs.com/package/salt-sdk
+SDK docs: https://salt-sdk-docs.edd.deno.net/classes/Salt.html#acceptorganisationinvitation
 
 ## Notes
 
