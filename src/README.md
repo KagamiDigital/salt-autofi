@@ -3,6 +3,8 @@
 [`salt-sdk`](https://npmjs.com/package/salt-sdk) is a publically available `npm`
 package that you can use today!
 
+Find the documentation at https://developer.salt.space/sdk/index.html.
+
 ### salt/
 
 [`index.ts`](./salt/index.ts) provides
