@@ -11,24 +11,37 @@ Instructions are for testnet access. Production access is available on request.
 
 ### Technical pre-requisites
 
-Node.js is a required dependency to be able to install and run the asset manager repository. [Install Node.js](https://nodejs.org/en/download/package-manager).
+Node.js is a required dependency to be able to install and run salt-autofi. [Install Node.js](https://nodejs.org/en/download/package-manager).
 
 ### Other pre-requisites
 
 1. A completely set up organisation on [testnet.salt.space](https://testnet.salt.space) with a funded account.
 2. One of the account's signers private key (add private key in .env file).
 
-## Set up the Salt-Autofi Repository
+## Set up the project
 
 1. clone the repo to your local machine
 2. npm install
 3. rename .env.sample to .env and set the private key variable to the private key of the account you want to manage assets from. You must be a signer on this account.
 4. set BROADCASTING_NETWORK_RPC_NODE_URL, and BROADCASTING_NETWORK_ID to the broadcasting network of your choice from the [supported networks list](#supported-broadcasting-networks) below.
 
-## Start the Salt-Autofi Bot
+NB: This repository can be ran in either agent or interactive mode. To run it in agent mode just set the AGENT environment variable to one of the valid values in .env.sample, otherwise just leave this variable empty for interactive mode.
 
-1. npm start
-2. follow the instructions printed on the command line
+5. npm start
+
+## Use an Agent
+
+If you have successfully ran the project in agent mode.
+
+Then,
+
+1. Go to testnet.salt.space
+2. Log into the organisation of your choice (or create one).
+3. Navigate to the collaborators tab and invite your agent (just enter its address in the form and submit).
+4. Your agent will join the organisation in the next 60 seconds (refresh the page to see the change).
+5. Start and complete a new account and invite your agent to it (your agent will join the huddle automatically).
+6. Based on the strategy you are running, send at least 0.1 of the currency native to the strategy to that account
+7. Wait for your funds to be swept (~ 3/5 minutes)
 
 ## ORCHESTRATION VS BROADCASTING (please read)
 
@@ -66,6 +79,7 @@ The RPC nodes supplied by default in the .env.sample file are free nodes. The re
 If you wish to broadcast on a test EVM network that is not supported in the list, please contact the Salt team on [Discord](https://discord.gg/UhDUBW9ymM).
 
 ## Useful Links
+
 SDK: https://www.npmjs.com/package/salt-sdk
 SDK docs: https://salt-sdk-docs.edd.deno.net/classes/Salt.html#acceptorganisationinvitation
 
