@@ -4,5 +4,6 @@ dist/
 index.js
 TODO.md
 /logs/*.log
+*.tar.gz
 
 *.sublime-*
