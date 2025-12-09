@@ -80,8 +80,8 @@ If you wish to broadcast on a test EVM network that is not supported in the list
 
 ## Useful Links
 
-SDK: https://www.npmjs.com/package/salt-sdk
-SDK docs: https://developer.salt.space/sdk
+- SDK: https://www.npmjs.com/package/salt-sdk
+- SDK docs: https://developer.salt.space/sdk
 
 ## Notes
 
