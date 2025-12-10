@@ -2,6 +2,7 @@ import { AGENT, signer } from "./config";
 import { interactiveMode } from "./interactive";
 import * as chorus_one from "./strategies/chorus-one/index";
 import * as somnia from "./strategies/somnia/index";
+import * as aave from "./strategies/aave/index";
 import { parseEther } from "ethers/lib/utils";
 import { SaltAgent, Strategy } from "./agent/index";
 import { Salt } from "salt-sdk";
@@ -18,6 +19,12 @@ export const salt = new Salt({ environment: "TESTNET" });
   } else if (AGENT === "SOMNIA") {
     const strategy: Strategy = {
       sweepFunction: somnia.delegateStakeToFirst,
+    };
+    const agent = new SaltAgent(signer, strategy, parseEther("0.1"));
+    agent.init();
+  } else if (AGENT === "AAVE") {
+    const strategy: Strategy = {
+      sweepFunction: aave.deposit,
     };
     const agent = new SaltAgent(signer, strategy, parseEther("0.1"));
     agent.init();

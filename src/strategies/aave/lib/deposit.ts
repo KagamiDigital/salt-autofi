@@ -2,7 +2,7 @@ import { BigNumber } from "ethers";
 import { aaveContract, poolContractAddress } from "..";
 import { formatEther, parseEther } from "ethers/lib/utils";
 import { askForInput } from "../../../helpers";
-import { sendTransaction } from "../../../salt";
+import { sendTransaction, sendTransactionDirect } from "../../../salt";
 
 /**
  * deposit into an Aave liquidity pool
@@ -12,9 +12,11 @@ import { sendTransaction } from "../../../salt";
 export async function deposit({
   accountAddress,
   amount,
+  accountId,
 }: {
   accountAddress: string;
   amount?: BigNumber;
+  accountId?: string;
 }) {
   console.log(poolContractAddress, accountAddress);
   const data = aaveContract.interface.encodeFunctionData("depositETH", [
@@ -28,9 +30,16 @@ export async function deposit({
 
   console.log(`Depositing ${formatEther(value)} ETH from ${accountAddress}`);
 
-  await sendTransaction({
-    recipient: aaveContract.address,
-    value,
-    data,
-  });
+  accountId
+    ? await sendTransactionDirect({
+        recipient: aaveContract.address,
+        value: value,
+        data: data,
+        accountId: accountId,
+      })
+    : await sendTransaction({
+        recipient: aaveContract.address,
+        value,
+        data,
+      });
 }

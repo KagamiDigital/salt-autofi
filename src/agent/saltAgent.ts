@@ -123,6 +123,10 @@ export class SaltAgent {
     await this.salt.authenticate(this.signer);
     this.nudgeListener = await this.salt.listenToAccountNudges(this.signer);
 
+    setInterval(() => {
+      console.log(`AGENT STATE: ${this.state}`);
+    }, 10000);
+
     setInterval(async () => {
       try {
         if (this.state !== "sleeping") {
@@ -160,7 +164,11 @@ export class SaltAgent {
 
     // accept new invitations
     for (let i = 0; i < invitations.length; i++) {
+      console.log(
+        `accepting new organisation (${invitations[i]._id}) invitation...`
+      );
       await this.salt.acceptOrganisationInvitation(invitations[i]._id);
+      console.log("invitation accepted...");
     }
   }
 
@@ -173,6 +181,9 @@ export class SaltAgent {
     const organisations = await this.salt.getOrganisations();
 
     for (let i = 0; i < organisations.length; i++) {
+      console.log(
+        `fetching organisation (${organisations[i]._id}) accounts...`
+      );
       const orgAccounts = await this.salt.getAccounts(organisations[i]._id);
       orgAccounts.forEach(
         (acc) =>
@@ -182,6 +193,7 @@ export class SaltAgent {
           ) &&
           this.managedAccounts.push(acc)
       );
+      console.log(`accounts fetched`);
     }
   }
 
@@ -194,9 +206,11 @@ export class SaltAgent {
 
     for (let i = 0; i < accountAddresses.length; i++) {
       try {
+        console.log(`calling rpc get balance (${accountAddresses[i]})...`);
         const balance = await broadcasting_network_provider.getBalance(
           accountAddresses[i]
         );
+        console.log("balance fetched successfully...");
         if (balance.gt(this.minBalance)) {
           this.handleNewDeposit({
             accountAddress: accountAddresses[i],
@@ -250,11 +264,14 @@ export class SaltAgent {
     if (this.depositsQueue.length === 0) return;
 
     if (this.nudgeListener.getIsProcessingNudge()) return;
-
+    console.log(
+      "agent is currently not processing a nudge, sweep can go ahead..."
+    );
     const deposit = this.depositsQueue.shift();
 
     this.nudgeListener.disableNudgeListener();
     try {
+      console.log("calling sweep function...");
       await this.strategy.sweepFunction({
         accountAddress: deposit.accountAddress,
         accountId: deposit.accountId,
