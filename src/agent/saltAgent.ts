@@ -130,14 +130,14 @@ export class SaltAgent {
     setInterval(async () => {
       try {
         if (this.state !== "sleeping") {
-          this.syncInvitations();
-          this.syncManagedAccounts();
+          await this.syncInvitations();
+          await this.syncManagedAccounts();
           this.state !== "sweeping" && this.syncNewDeposits();
         }
       } catch (error) {
         console.error("error fetching API information", error);
       }
-    }, 60 * 1000);
+    }, 120 * 1000);
   }
 
   /**
@@ -149,6 +149,7 @@ export class SaltAgent {
 
     while (this.depositsQueue.length > 0) {
       await this._sweepDeposits();
+      await new Promise((resolve) => setTimeout(resolve, 125));
     }
 
     this.state = "watching";
@@ -185,14 +186,17 @@ export class SaltAgent {
         `fetching organisation (${organisations[i]._id}) accounts...`
       );
       const orgAccounts = await this.salt.getAccounts(organisations[i]._id);
-      orgAccounts.forEach(
-        (acc) =>
+      orgAccounts.forEach((acc) => {
+        const isValidAcc =
           acc.publicKey !== null &&
           acc.signers.some(
             (s) => s.toLowerCase() === signerAddress.toLowerCase()
-          ) &&
-          this.managedAccounts.push(acc)
-      );
+          );
+        if (isValidAcc)
+          !this.managedAccounts.some(
+            (managedAcc) => managedAcc.id === acc.id
+          ) && this.managedAccounts.push(acc);
+      });
       console.log(`accounts fetched`);
     }
   }
@@ -210,6 +214,9 @@ export class SaltAgent {
         const balance = await broadcasting_network_provider.getBalance(
           accountAddresses[i]
         );
+
+        await new Promise((resolve) => setTimeout(resolve, 250));
+
         console.log("balance fetched successfully...");
         if (balance.gt(this.minBalance)) {
           this.handleNewDeposit({
