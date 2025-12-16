@@ -3,14 +3,14 @@ import { askForInput, networkSanityCheck, printRectangle, rl } from "./helpers";
 import * as chorus_one from "./strategies/chorus-one";
 import * as aave from "./strategies/aave";
 import * as somnia from "./strategies/somnia";
+import * as hyperliquid from "./strategies/hyperliquid";
 import { chooseAccount, sendTransaction } from "./salt";
 import { ethers } from "ethers";
 import { formatEther, formatUnits } from "ethers/lib/utils";
 import { Salt } from "salt-sdk";
 import { SOMNIA_SHANON } from "./strategies/somnia";
 import { transfer } from "./strategies/erc20";
-
-const salt = new Salt({ environment: "TESTNET" });
+import { salt } from ".";
 
 // A basic TUI to demonstrate usage
 export async function interactiveMode() {
@@ -42,7 +42,7 @@ export async function interactiveMode() {
       });
     } else if (input === "3") {
       const input = await askForInput(
-        "Which strategy: \n [1] Chorus One Staking \n [2] Somnia Staking \n [3] Aave \n [4] Exit \n Please choose one of the options listed above: "
+        "Which strategy: \n [1] Chorus One Staking \n [2] Somnia Staking \n [3] Aave \n [4] HyperSwap \n [5] Exit \n Please choose one of the options listed above: "
       );
 
       if (input === "1") {
@@ -192,6 +192,13 @@ SST already with ${info.totalPendingRewards} pending rewards across ${
           console.log(`Please enter a valid choice`);
         }
       } else if (input === "4") {
+        //const input = await askForInput(msg);
+        const { accountAddress: accountAddress } = await chooseAccount();
+
+        await hyperliquid.swap({ accountAddress }).catch((error) => {
+          console.log(`Error: ${error}`);
+        });
+      } else if (input === "5") {
         done = true;
       } else {
         console.log("Please enter a valid choice");
