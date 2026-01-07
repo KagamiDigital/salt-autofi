@@ -30,7 +30,7 @@ export const salt = new Salt({ environment: "TESTNET" });
     agent.init();
   } else {
     console.info(
-      `unrecognized value for AGENT: ${AGENT}, running interactive mode`
+      `unrecognized value for AGENT: ${AGENT}, running interactive mode`,
     );
     interactiveMode();
   }
