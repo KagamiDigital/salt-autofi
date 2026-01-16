@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This repository is a starter pack for non-custodial service providers on Salt accounts. For example you could run a "wallet butler" which responds to messages from your customer on Salt and deploys funds on their behalf into yield opportunities.
+This repository is a starter pack for non-custodial service providers on Salt accounts. For example you could run a "robo manager" which plugs into a wallet and deploys funds on the owner's behalf into yield opportunities.
 
 To achieve this, you will propose transactions to Salt accounts where you are an authorized signer.
 Instructions are for testnet access. Production access is available on request.
@@ -29,7 +29,7 @@ NB: This repository can be ran in either agent or interactive mode. To run it in
 
 5. npm start
 
-## Use an Agent
+## Running your Robo Manager
 
 If you have successfully ran the project in agent mode.
 
