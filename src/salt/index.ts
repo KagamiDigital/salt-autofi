@@ -23,7 +23,7 @@ export async function chooseAccount(): Promise<{
       console.log(`[${i}] ${orgs[i].name}`);
     }
     orgIndex = await askForInput(
-      "Please choose one of the organisations above to fetch the accounts from: "
+      "Please choose one of the organisations above to fetch the accounts from: ",
     );
   }
 
@@ -34,7 +34,7 @@ export async function chooseAccount(): Promise<{
     }
 
     accIndex = await askForInput(
-      "Please choose one of the accounts above to send a transaction from: "
+      "Please choose one of the accounts above to send a transaction from: ",
     );
   }
 
@@ -75,8 +75,8 @@ export async function sendTransaction({
       ? value
       : ethers.utils.parseEther(
           await askForInput(
-            "Please enter the amount you wish to transfer (in ETH): "
-          )
+            "Please enter the amount you wish to transfer (in ETH): ",
+          ),
         );
 
   recipient =
@@ -86,8 +86,8 @@ export async function sendTransaction({
 
   console.log(
     `Transferring ${ethers.utils.formatEther(
-      value
-    )} to ${recipient} with data ${data}`
+      value,
+    )} to ${recipient} with data ${data}`,
   );
 
   // gas is handled by SDK
@@ -102,54 +102,8 @@ export async function sendTransaction({
     gas: gas ?? undefined,
   });
 
-  // A Promise wrapper around the salt-sdk internal state machine
-  await new Promise((resolve, reject) => {
-    //propose
-    transfer.onPropose((data) => console.log("PROPOSE :", data));
-    // sign
-    transfer.onSign((data) => console.log(`SIGNING:`, data));
-    //combine
-    transfer.onCombine((data) => console.log("COMBINE:", data));
-    //broadcast
-    transfer.onBroadcast((data) => console.log("BROADCAST:", data));
-    //end
-    transfer.onEnd((data: { receipt: { transactionHash: string } }) => {
-      console.log("Broadcased transaction:", data);
-      // waiting here is just a sanity check, salt-sdk should already do this internally
-      if (data?.receipt?.transactionHash) {
-        broadcasting_network_provider
-          .waitForTransaction(data.receipt.transactionHash)
-          .then(resolve);
-      } else {
-        resolve(
-          "Transaction successful, but didn't confirm it was broadcasted"
-        );
-      }
-    });
-
-    // Observe Errors states
-
-    transfer.onTransition(0, 5, (data) => {
-      const err = new Error(`IDLE->END Error starting transfer`);
-      console.error(err, data);
-      reject(err);
-    });
-    transfer.onTransition(1, 5, (data) => {
-      const err = new Error(`PROPOSE->END Policy breach`);
-      console.error(err, data);
-      reject(err);
-    });
-    transfer.onTransition(2, 5, (data) => {
-      const err = new Error(`SIGN->END Error signing`);
-      console.error(err, data);
-      reject(err);
-    });
-    transfer.onTransition(3, 5, (data) => {
-      const err = new Error(`COMBINE->END Error combining`);
-      console.error(err, data);
-      reject(err);
-    });
-  });
+  const result = await transfer.wait();
+  console.log("the final result is", result);
 }
 
 /**
@@ -184,8 +138,8 @@ export async function sendTransactionDirect({
       ? value
       : ethers.utils.parseEther(
           await askForInput(
-            "Please enter the amount you wish to transfer (in ETH): "
-          )
+            "Please enter the amount you wish to transfer (in ETH): ",
+          ),
         );
 
   recipient =
@@ -195,8 +149,8 @@ export async function sendTransactionDirect({
 
   console.log(
     `Transferring ${ethers.utils.formatEther(
-      value
-    )} to ${recipient} with data ${data}`
+      value,
+    )} to ${recipient} with data ${data}`,
   );
 
   // gas is handled by SDK
@@ -211,57 +165,6 @@ export async function sendTransactionDirect({
     gas: gas ?? undefined,
   });
 
-  // A Promise wrapper around the salt-sdk internal state machine
-  await new Promise((resolve, reject) => {
-    setTimeout(() => {
-      reject(
-        `The transaction is taking more than ${timeoutSeconds} seconds to complete, resolving the promise`
-      );
-    }, timeoutSeconds * 1000);
-    //propose
-    transfer.onPropose((data) => console.log("PROPOSE :", data));
-    // sign
-    transfer.onSign((data) => console.log(`SIGNING:`, data));
-    //combine
-    transfer.onCombine((data) => console.log("COMBINE:", data));
-    //broadcast
-    transfer.onBroadcast((data) => console.log("BROADCAST:", data));
-    //end
-    transfer.onEnd((data: { receipt: { transactionHash: string } }) => {
-      console.log("Broadcased transaction:", data);
-      // waiting here is just a sanity check, salt-sdk should already do this internally
-      if (data?.receipt?.transactionHash) {
-        broadcasting_network_provider
-          .waitForTransaction(data.receipt.transactionHash)
-          .then(resolve);
-      } else {
-        resolve(
-          "Transaction successful, but didn't confirm it was broadcasted"
-        );
-      }
-    });
-
-    // Observe Errors states
-
-    transfer.onTransition(0, 5, (data) => {
-      const err = new Error(`IDLE->END Error starting transfer`);
-      console.error(err, data);
-      reject(err);
-    });
-    transfer.onTransition(1, 5, (data) => {
-      const err = new Error(`PROPOSE->END Policy breach`);
-      console.error(err, data);
-      reject(err);
-    });
-    transfer.onTransition(2, 5, (data) => {
-      const err = new Error(`SIGN->END Error signing`);
-      console.error(err, data);
-      reject(err);
-    });
-    transfer.onTransition(3, 5, (data) => {
-      const err = new Error(`COMBINE->END Error combining`);
-      console.error(err, data);
-      reject(err);
-    });
-  });
+  const result = await transfer.wait();
+  console.log("the final result is", result);
 }
